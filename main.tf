@@ -1,10 +1,10 @@
-resource "azurerm_storage_management_policy" "storage_management_policys" {
-  for_each = var.storage_management_policys
+resource "azurerm_storage_management_policy" "storage_management_policies" {
+  for_each = var.storage_management_policies
 
   storage_account_id = each.value.storage_account_id
 
   dynamic "rule" {
-    for_each = each.value.rule != null ? [each.value.rule] : []
+    for_each = each.value.rule != null ? each.value.rule : []
     content {
       actions {
         dynamic "base_blob" {
