@@ -51,7 +51,7 @@ resource "azurerm_storage_management_policy" "storage_management_policies" {
       filters {
         blob_types = rule.value.filters.blob_types
         dynamic "match_blob_index_tag" {
-          for_each = rule.value.filters.match_blob_index_tag != null ? [rule.value.filters.match_blob_index_tag] : []
+          for_each = rule.value.filters.match_blob_index_tag != null ? rule.value.filters.match_blob_index_tag : []
           content {
             name      = match_blob_index_tag.value.name
             operation = match_blob_index_tag.value.operation

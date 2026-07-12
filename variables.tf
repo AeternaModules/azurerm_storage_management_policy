@@ -82,11 +82,11 @@ EOT
       enabled = bool
       filters = object({
         blob_types = set(string)
-        match_blob_index_tag = optional(object({
+        match_blob_index_tag = optional(list(object({
           name      = string
           operation = optional(string) # Default: "=="
           value     = string
-        }))
+        })))
         prefix_match = optional(set(string))
       })
       name = string
