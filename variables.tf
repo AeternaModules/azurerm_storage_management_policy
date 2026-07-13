@@ -50,33 +50,33 @@ EOT
       actions = object({
         base_blob = optional(object({
           auto_tier_to_hot_from_cool_enabled                             = optional(bool)
-          delete_after_days_since_creation_greater_than                  = optional(number) # Default: -1
-          delete_after_days_since_last_access_time_greater_than          = optional(number) # Default: -1
-          delete_after_days_since_modification_greater_than              = optional(number) # Default: -1
-          tier_to_archive_after_days_since_creation_greater_than         = optional(number) # Default: -1
-          tier_to_archive_after_days_since_last_access_time_greater_than = optional(number) # Default: -1
-          tier_to_archive_after_days_since_last_tier_change_greater_than = optional(number) # Default: -1
-          tier_to_archive_after_days_since_modification_greater_than     = optional(number) # Default: -1
-          tier_to_cold_after_days_since_creation_greater_than            = optional(number) # Default: -1
-          tier_to_cold_after_days_since_last_access_time_greater_than    = optional(number) # Default: -1
-          tier_to_cold_after_days_since_modification_greater_than        = optional(number) # Default: -1
-          tier_to_cool_after_days_since_creation_greater_than            = optional(number) # Default: -1
-          tier_to_cool_after_days_since_last_access_time_greater_than    = optional(number) # Default: -1
-          tier_to_cool_after_days_since_modification_greater_than        = optional(number) # Default: -1
+          delete_after_days_since_creation_greater_than                  = optional(number)
+          delete_after_days_since_last_access_time_greater_than          = optional(number)
+          delete_after_days_since_modification_greater_than              = optional(number)
+          tier_to_archive_after_days_since_creation_greater_than         = optional(number)
+          tier_to_archive_after_days_since_last_access_time_greater_than = optional(number)
+          tier_to_archive_after_days_since_last_tier_change_greater_than = optional(number)
+          tier_to_archive_after_days_since_modification_greater_than     = optional(number)
+          tier_to_cold_after_days_since_creation_greater_than            = optional(number)
+          tier_to_cold_after_days_since_last_access_time_greater_than    = optional(number)
+          tier_to_cold_after_days_since_modification_greater_than        = optional(number)
+          tier_to_cool_after_days_since_creation_greater_than            = optional(number)
+          tier_to_cool_after_days_since_last_access_time_greater_than    = optional(number)
+          tier_to_cool_after_days_since_modification_greater_than        = optional(number)
         }))
         snapshot = optional(object({
-          change_tier_to_archive_after_days_since_creation               = optional(number) # Default: -1
-          change_tier_to_cool_after_days_since_creation                  = optional(number) # Default: -1
-          delete_after_days_since_creation_greater_than                  = optional(number) # Default: -1
-          tier_to_archive_after_days_since_last_tier_change_greater_than = optional(number) # Default: -1
-          tier_to_cold_after_days_since_creation_greater_than            = optional(number) # Default: -1
+          change_tier_to_archive_after_days_since_creation               = optional(number)
+          change_tier_to_cool_after_days_since_creation                  = optional(number)
+          delete_after_days_since_creation_greater_than                  = optional(number)
+          tier_to_archive_after_days_since_last_tier_change_greater_than = optional(number)
+          tier_to_cold_after_days_since_creation_greater_than            = optional(number)
         }))
         version = optional(object({
-          change_tier_to_archive_after_days_since_creation               = optional(number) # Default: -1
-          change_tier_to_cool_after_days_since_creation                  = optional(number) # Default: -1
-          delete_after_days_since_creation                               = optional(number) # Default: -1
-          tier_to_archive_after_days_since_last_tier_change_greater_than = optional(number) # Default: -1
-          tier_to_cold_after_days_since_creation_greater_than            = optional(number) # Default: -1
+          change_tier_to_archive_after_days_since_creation               = optional(number)
+          change_tier_to_cool_after_days_since_creation                  = optional(number)
+          delete_after_days_since_creation                               = optional(number)
+          tier_to_archive_after_days_since_last_tier_change_greater_than = optional(number)
+          tier_to_cold_after_days_since_creation_greater_than            = optional(number)
         }))
       })
       enabled = bool
@@ -84,7 +84,7 @@ EOT
         blob_types = set(string)
         match_blob_index_tag = optional(list(object({
           name      = string
-          operation = optional(string) # Default: "=="
+          operation = optional(string)
           value     = string
         })))
         prefix_match = optional(set(string))
@@ -92,14 +92,6 @@ EOT
       name = string
     })))
   }))
-  validation {
-    condition = alltrue([
-      for k, v in var.storage_management_policies : (
-        v.rule == null || (length(v.rule) >= 1)
-      )
-    ])
-    error_message = "Each rule list must contain at least 1 items"
-  }
   # --- Unconfirmed validation candidates, derived from azurerm_storage_management_policy's provider source ---
   # Not auto-enabled: either a bespoke provider validator we can't safely translate,
   # or a path that crosses a list-typed block (needs its own for_each wrapping).
