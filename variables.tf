@@ -92,97 +92,222 @@ EOT
       name = string
     })))
   }))
-  # --- Unconfirmed validation candidates, derived from azurerm_storage_management_policy's provider source ---
-  # Not auto-enabled: either a bespoke provider validator we can't safely translate,
-  # or a path that crosses a list-typed block (needs its own for_each wrapping).
-  # Review, translate into a real validation{} block above, and delete once confirmed.
-  # path: storage_account_id
-  #   source:    [from commonids.ValidateStorageAccountID] !ok
-  # path: storage_account_id
-  #   source:    [from commonids.ValidateStorageAccountID] err != nil
-  # path: rule.name
-  #   condition: length(value) > 0
-  #   message:   must not be empty
-  # path: rule.filters.blob_types[*]
-  #   condition: contains(["blockBlob", "appendBlob"], value)
-  #   message:   must be one of: blockBlob, appendBlob
-  # path: rule.filters.match_blob_index_tag.name
-  #   source:    [from validate.StorageBlobIndexTagName] len(value) == 0 || len(value) > 128
-  # path: rule.filters.match_blob_index_tag.operation
-  #   condition: contains(["=="], value)
-  #   message:   must be one of: ==
-  # path: rule.filters.match_blob_index_tag.value
-  #   condition: length(value) <= 256
-  #   message:   [from validate.StorageBlobIndexTagValue: invalid when len(value) > 256]
-  #   source:    [from validate.StorageBlobIndexTagValue: invalid when len(value) > 256]
-  # path: rule.actions.base_blob.tier_to_cool_after_days_since_modification_greater_than
-  #   condition: value >= 0 && value <= 99999
-  #   message:   must be between 0 and 99999
-  # path: rule.actions.base_blob.tier_to_cool_after_days_since_last_access_time_greater_than
-  #   condition: value >= 0 && value <= 99999
-  #   message:   must be between 0 and 99999
-  # path: rule.actions.base_blob.tier_to_cool_after_days_since_creation_greater_than
-  #   condition: value >= 0 && value <= 99999
-  #   message:   must be between 0 and 99999
-  # path: rule.actions.base_blob.tier_to_archive_after_days_since_modification_greater_than
-  #   condition: value >= 0 && value <= 99999
-  #   message:   must be between 0 and 99999
-  # path: rule.actions.base_blob.tier_to_archive_after_days_since_last_access_time_greater_than
-  #   condition: value >= 0 && value <= 99999
-  #   message:   must be between 0 and 99999
-  # path: rule.actions.base_blob.tier_to_archive_after_days_since_last_tier_change_greater_than
-  #   condition: value >= 0 && value <= 99999
-  #   message:   must be between 0 and 99999
-  # path: rule.actions.base_blob.tier_to_archive_after_days_since_creation_greater_than
-  #   condition: value >= 0 && value <= 99999
-  #   message:   must be between 0 and 99999
-  # path: rule.actions.base_blob.tier_to_cold_after_days_since_modification_greater_than
-  #   condition: value >= 0 && value <= 99999
-  #   message:   must be between 0 and 99999
-  # path: rule.actions.base_blob.tier_to_cold_after_days_since_last_access_time_greater_than
-  #   condition: value >= 0 && value <= 99999
-  #   message:   must be between 0 and 99999
-  # path: rule.actions.base_blob.tier_to_cold_after_days_since_creation_greater_than
-  #   condition: value >= 0 && value <= 99999
-  #   message:   must be between 0 and 99999
-  # path: rule.actions.base_blob.delete_after_days_since_modification_greater_than
-  #   condition: value >= 0 && value <= 99999
-  #   message:   must be between 0 and 99999
-  # path: rule.actions.base_blob.delete_after_days_since_last_access_time_greater_than
-  #   condition: value >= 0 && value <= 99999
-  #   message:   must be between 0 and 99999
-  # path: rule.actions.base_blob.delete_after_days_since_creation_greater_than
-  #   condition: value >= 0 && value <= 99999
-  #   message:   must be between 0 and 99999
-  # path: rule.actions.snapshot.change_tier_to_archive_after_days_since_creation
-  #   condition: value >= 0 && value <= 99999
-  #   message:   must be between 0 and 99999
-  # path: rule.actions.snapshot.tier_to_archive_after_days_since_last_tier_change_greater_than
-  #   condition: value >= 0 && value <= 99999
-  #   message:   must be between 0 and 99999
-  # path: rule.actions.snapshot.change_tier_to_cool_after_days_since_creation
-  #   condition: value >= 0 && value <= 99999
-  #   message:   must be between 0 and 99999
-  # path: rule.actions.snapshot.tier_to_cold_after_days_since_creation_greater_than
-  #   condition: value >= 0 && value <= 99999
-  #   message:   must be between 0 and 99999
-  # path: rule.actions.snapshot.delete_after_days_since_creation_greater_than
-  #   condition: value >= 0 && value <= 99999
-  #   message:   must be between 0 and 99999
-  # path: rule.actions.version.change_tier_to_archive_after_days_since_creation
-  #   condition: value >= 0 && value <= 99999
-  #   message:   must be between 0 and 99999
-  # path: rule.actions.version.tier_to_archive_after_days_since_last_tier_change_greater_than
-  #   condition: value >= 0 && value <= 99999
-  #   message:   must be between 0 and 99999
-  # path: rule.actions.version.change_tier_to_cool_after_days_since_creation
-  #   condition: value >= 0 && value <= 99999
-  #   message:   must be between 0 and 99999
-  # path: rule.actions.version.tier_to_cold_after_days_since_creation_greater_than
-  #   condition: value >= 0 && value <= 99999
-  #   message:   must be between 0 and 99999
-  # path: rule.actions.version.delete_after_days_since_creation
-  #   condition: value >= 0 && value <= 99999
-  #   message:   must be between 0 and 99999
+  validation {
+    condition = alltrue([
+      for k, v in var.storage_management_policies : (
+        v.rule == null || alltrue([for item in v.rule : (length(item.name) > 0)])
+      )
+    ])
+    error_message = "must not be empty"
+  }
+  validation {
+    condition = alltrue([
+      for k, v in var.storage_management_policies : (
+        v.rule == null || alltrue([for item in v.rule : (alltrue([for x in item.filters.blob_types : contains(["blockBlob", "appendBlob"], x)]))])
+      )
+    ])
+    error_message = "must be one of: blockBlob, appendBlob"
+  }
+  validation {
+    condition = alltrue([
+      for k, v in var.storage_management_policies : (
+        v.rule == null || alltrue([for item in v.rule : (item.filters.match_blob_index_tag == null || alltrue([for item in item.filters.match_blob_index_tag : (item.operation == null || (contains(["=="], item.operation)))]))])
+      )
+    ])
+    error_message = "must be one of: =="
+  }
+  validation {
+    condition = alltrue([
+      for k, v in var.storage_management_policies : (
+        v.rule == null || alltrue([for item in v.rule : (item.filters.match_blob_index_tag == null || alltrue([for item in item.filters.match_blob_index_tag : (length(item.value) <= 256)]))])
+      )
+    ])
+    error_message = "[from validate.StorageBlobIndexTagValue: invalid when len(value) > 256]"
+  }
+  validation {
+    condition = alltrue([
+      for k, v in var.storage_management_policies : (
+        v.rule == null || alltrue([for item in v.rule : (item.actions.base_blob == null || (item.actions.base_blob.tier_to_cool_after_days_since_modification_greater_than == null || (item.actions.base_blob.tier_to_cool_after_days_since_modification_greater_than >= 0 && item.actions.base_blob.tier_to_cool_after_days_since_modification_greater_than <= 99999)))])
+      )
+    ])
+    error_message = "must be between 0 and 99999"
+  }
+  validation {
+    condition = alltrue([
+      for k, v in var.storage_management_policies : (
+        v.rule == null || alltrue([for item in v.rule : (item.actions.base_blob == null || (item.actions.base_blob.tier_to_cool_after_days_since_last_access_time_greater_than == null || (item.actions.base_blob.tier_to_cool_after_days_since_last_access_time_greater_than >= 0 && item.actions.base_blob.tier_to_cool_after_days_since_last_access_time_greater_than <= 99999)))])
+      )
+    ])
+    error_message = "must be between 0 and 99999"
+  }
+  validation {
+    condition = alltrue([
+      for k, v in var.storage_management_policies : (
+        v.rule == null || alltrue([for item in v.rule : (item.actions.base_blob == null || (item.actions.base_blob.tier_to_cool_after_days_since_creation_greater_than == null || (item.actions.base_blob.tier_to_cool_after_days_since_creation_greater_than >= 0 && item.actions.base_blob.tier_to_cool_after_days_since_creation_greater_than <= 99999)))])
+      )
+    ])
+    error_message = "must be between 0 and 99999"
+  }
+  validation {
+    condition = alltrue([
+      for k, v in var.storage_management_policies : (
+        v.rule == null || alltrue([for item in v.rule : (item.actions.base_blob == null || (item.actions.base_blob.tier_to_archive_after_days_since_modification_greater_than == null || (item.actions.base_blob.tier_to_archive_after_days_since_modification_greater_than >= 0 && item.actions.base_blob.tier_to_archive_after_days_since_modification_greater_than <= 99999)))])
+      )
+    ])
+    error_message = "must be between 0 and 99999"
+  }
+  validation {
+    condition = alltrue([
+      for k, v in var.storage_management_policies : (
+        v.rule == null || alltrue([for item in v.rule : (item.actions.base_blob == null || (item.actions.base_blob.tier_to_archive_after_days_since_last_access_time_greater_than == null || (item.actions.base_blob.tier_to_archive_after_days_since_last_access_time_greater_than >= 0 && item.actions.base_blob.tier_to_archive_after_days_since_last_access_time_greater_than <= 99999)))])
+      )
+    ])
+    error_message = "must be between 0 and 99999"
+  }
+  validation {
+    condition = alltrue([
+      for k, v in var.storage_management_policies : (
+        v.rule == null || alltrue([for item in v.rule : (item.actions.base_blob == null || (item.actions.base_blob.tier_to_archive_after_days_since_last_tier_change_greater_than == null || (item.actions.base_blob.tier_to_archive_after_days_since_last_tier_change_greater_than >= 0 && item.actions.base_blob.tier_to_archive_after_days_since_last_tier_change_greater_than <= 99999)))])
+      )
+    ])
+    error_message = "must be between 0 and 99999"
+  }
+  validation {
+    condition = alltrue([
+      for k, v in var.storage_management_policies : (
+        v.rule == null || alltrue([for item in v.rule : (item.actions.base_blob == null || (item.actions.base_blob.tier_to_archive_after_days_since_creation_greater_than == null || (item.actions.base_blob.tier_to_archive_after_days_since_creation_greater_than >= 0 && item.actions.base_blob.tier_to_archive_after_days_since_creation_greater_than <= 99999)))])
+      )
+    ])
+    error_message = "must be between 0 and 99999"
+  }
+  validation {
+    condition = alltrue([
+      for k, v in var.storage_management_policies : (
+        v.rule == null || alltrue([for item in v.rule : (item.actions.base_blob == null || (item.actions.base_blob.tier_to_cold_after_days_since_modification_greater_than == null || (item.actions.base_blob.tier_to_cold_after_days_since_modification_greater_than >= 0 && item.actions.base_blob.tier_to_cold_after_days_since_modification_greater_than <= 99999)))])
+      )
+    ])
+    error_message = "must be between 0 and 99999"
+  }
+  validation {
+    condition = alltrue([
+      for k, v in var.storage_management_policies : (
+        v.rule == null || alltrue([for item in v.rule : (item.actions.base_blob == null || (item.actions.base_blob.tier_to_cold_after_days_since_last_access_time_greater_than == null || (item.actions.base_blob.tier_to_cold_after_days_since_last_access_time_greater_than >= 0 && item.actions.base_blob.tier_to_cold_after_days_since_last_access_time_greater_than <= 99999)))])
+      )
+    ])
+    error_message = "must be between 0 and 99999"
+  }
+  validation {
+    condition = alltrue([
+      for k, v in var.storage_management_policies : (
+        v.rule == null || alltrue([for item in v.rule : (item.actions.base_blob == null || (item.actions.base_blob.tier_to_cold_after_days_since_creation_greater_than == null || (item.actions.base_blob.tier_to_cold_after_days_since_creation_greater_than >= 0 && item.actions.base_blob.tier_to_cold_after_days_since_creation_greater_than <= 99999)))])
+      )
+    ])
+    error_message = "must be between 0 and 99999"
+  }
+  validation {
+    condition = alltrue([
+      for k, v in var.storage_management_policies : (
+        v.rule == null || alltrue([for item in v.rule : (item.actions.base_blob == null || (item.actions.base_blob.delete_after_days_since_modification_greater_than == null || (item.actions.base_blob.delete_after_days_since_modification_greater_than >= 0 && item.actions.base_blob.delete_after_days_since_modification_greater_than <= 99999)))])
+      )
+    ])
+    error_message = "must be between 0 and 99999"
+  }
+  validation {
+    condition = alltrue([
+      for k, v in var.storage_management_policies : (
+        v.rule == null || alltrue([for item in v.rule : (item.actions.base_blob == null || (item.actions.base_blob.delete_after_days_since_last_access_time_greater_than == null || (item.actions.base_blob.delete_after_days_since_last_access_time_greater_than >= 0 && item.actions.base_blob.delete_after_days_since_last_access_time_greater_than <= 99999)))])
+      )
+    ])
+    error_message = "must be between 0 and 99999"
+  }
+  validation {
+    condition = alltrue([
+      for k, v in var.storage_management_policies : (
+        v.rule == null || alltrue([for item in v.rule : (item.actions.base_blob == null || (item.actions.base_blob.delete_after_days_since_creation_greater_than == null || (item.actions.base_blob.delete_after_days_since_creation_greater_than >= 0 && item.actions.base_blob.delete_after_days_since_creation_greater_than <= 99999)))])
+      )
+    ])
+    error_message = "must be between 0 and 99999"
+  }
+  validation {
+    condition = alltrue([
+      for k, v in var.storage_management_policies : (
+        v.rule == null || alltrue([for item in v.rule : (item.actions.snapshot == null || (item.actions.snapshot.change_tier_to_archive_after_days_since_creation == null || (item.actions.snapshot.change_tier_to_archive_after_days_since_creation >= 0 && item.actions.snapshot.change_tier_to_archive_after_days_since_creation <= 99999)))])
+      )
+    ])
+    error_message = "must be between 0 and 99999"
+  }
+  validation {
+    condition = alltrue([
+      for k, v in var.storage_management_policies : (
+        v.rule == null || alltrue([for item in v.rule : (item.actions.snapshot == null || (item.actions.snapshot.tier_to_archive_after_days_since_last_tier_change_greater_than == null || (item.actions.snapshot.tier_to_archive_after_days_since_last_tier_change_greater_than >= 0 && item.actions.snapshot.tier_to_archive_after_days_since_last_tier_change_greater_than <= 99999)))])
+      )
+    ])
+    error_message = "must be between 0 and 99999"
+  }
+  validation {
+    condition = alltrue([
+      for k, v in var.storage_management_policies : (
+        v.rule == null || alltrue([for item in v.rule : (item.actions.snapshot == null || (item.actions.snapshot.change_tier_to_cool_after_days_since_creation == null || (item.actions.snapshot.change_tier_to_cool_after_days_since_creation >= 0 && item.actions.snapshot.change_tier_to_cool_after_days_since_creation <= 99999)))])
+      )
+    ])
+    error_message = "must be between 0 and 99999"
+  }
+  validation {
+    condition = alltrue([
+      for k, v in var.storage_management_policies : (
+        v.rule == null || alltrue([for item in v.rule : (item.actions.snapshot == null || (item.actions.snapshot.tier_to_cold_after_days_since_creation_greater_than == null || (item.actions.snapshot.tier_to_cold_after_days_since_creation_greater_than >= 0 && item.actions.snapshot.tier_to_cold_after_days_since_creation_greater_than <= 99999)))])
+      )
+    ])
+    error_message = "must be between 0 and 99999"
+  }
+  validation {
+    condition = alltrue([
+      for k, v in var.storage_management_policies : (
+        v.rule == null || alltrue([for item in v.rule : (item.actions.snapshot == null || (item.actions.snapshot.delete_after_days_since_creation_greater_than == null || (item.actions.snapshot.delete_after_days_since_creation_greater_than >= 0 && item.actions.snapshot.delete_after_days_since_creation_greater_than <= 99999)))])
+      )
+    ])
+    error_message = "must be between 0 and 99999"
+  }
+  validation {
+    condition = alltrue([
+      for k, v in var.storage_management_policies : (
+        v.rule == null || alltrue([for item in v.rule : (item.actions.version == null || (item.actions.version.change_tier_to_archive_after_days_since_creation == null || (item.actions.version.change_tier_to_archive_after_days_since_creation >= 0 && item.actions.version.change_tier_to_archive_after_days_since_creation <= 99999)))])
+      )
+    ])
+    error_message = "must be between 0 and 99999"
+  }
+  validation {
+    condition = alltrue([
+      for k, v in var.storage_management_policies : (
+        v.rule == null || alltrue([for item in v.rule : (item.actions.version == null || (item.actions.version.tier_to_archive_after_days_since_last_tier_change_greater_than == null || (item.actions.version.tier_to_archive_after_days_since_last_tier_change_greater_than >= 0 && item.actions.version.tier_to_archive_after_days_since_last_tier_change_greater_than <= 99999)))])
+      )
+    ])
+    error_message = "must be between 0 and 99999"
+  }
+  validation {
+    condition = alltrue([
+      for k, v in var.storage_management_policies : (
+        v.rule == null || alltrue([for item in v.rule : (item.actions.version == null || (item.actions.version.change_tier_to_cool_after_days_since_creation == null || (item.actions.version.change_tier_to_cool_after_days_since_creation >= 0 && item.actions.version.change_tier_to_cool_after_days_since_creation <= 99999)))])
+      )
+    ])
+    error_message = "must be between 0 and 99999"
+  }
+  validation {
+    condition = alltrue([
+      for k, v in var.storage_management_policies : (
+        v.rule == null || alltrue([for item in v.rule : (item.actions.version == null || (item.actions.version.tier_to_cold_after_days_since_creation_greater_than == null || (item.actions.version.tier_to_cold_after_days_since_creation_greater_than >= 0 && item.actions.version.tier_to_cold_after_days_since_creation_greater_than <= 99999)))])
+      )
+    ])
+    error_message = "must be between 0 and 99999"
+  }
+  validation {
+    condition = alltrue([
+      for k, v in var.storage_management_policies : (
+        v.rule == null || alltrue([for item in v.rule : (item.actions.version == null || (item.actions.version.delete_after_days_since_creation == null || (item.actions.version.delete_after_days_since_creation >= 0 && item.actions.version.delete_after_days_since_creation <= 99999)))])
+      )
+    ])
+    error_message = "must be between 0 and 99999"
+  }
+  # Note: 3 additional provider-side validators are enforced at apply time but not mirrored as validation{} blocks here (bespoke or non-mechanically-translatable).
 }
 
